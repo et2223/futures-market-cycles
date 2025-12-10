@@ -1,7 +1,6 @@
 import os
 import re
 from collections import defaultdict, Counter
-from datetime import datetime
 
 # CONFIG
 BEST_TRADES_DIR = "group-best-trades"
@@ -51,9 +50,7 @@ def parse_best_trades_file(path: str):
                     counts_section = True
                 continue
             # inside Count by Setup section
-            if not line or line.startswith("#"):
-                # end if we hit another header or blank
-                # but allow blank lines between bullet points
+            if not line:
                 continue
             # lines expected like "- EMT: 3"
             m2 = re.match(r"[-*]\s+(.+?):\s*([\d]+)", line)
@@ -116,7 +113,6 @@ def infer_cycle_and_setups(last_days_counts):
     else:
         cycle = "Hybrid"
 
-    # Decide primary & secondary setups based on cycle & frequency
     primary = []
     secondary = []
     avoid = []
@@ -153,12 +149,27 @@ def infer_cycle_and_setups(last_days_counts):
             avoid.append("Continuation")
 
     else:  # Hybrid
-        # Hybrid: mix of trend + traps. Choose top 2–3 overall as primary
-        primary = sorted_setups[:3]
-        # Secondary = the rest that are not clearly opposite
-        for s in sorted_setups[3:]:
-            secondary.append(s)
-        # Avoid list left empty here – up to intraday read
+        # HYBRID UPDATE:
+        # Hybrid: trend + traps. REM should be treated as primary if present.
+        # 1) Start from top 3 most frequent setups as before
+        base_primary = sorted_setups[:3]
+
+        # 2) Ensure REM is included in primary if it exists at all
+        if "REM" in sorted_setups and "REM" not in base_primary:
+            base_primary.append("REM")
+
+        # Remove duplicates while preserving order
+        seen = set()
+        primary = []
+        for s in base_primary:
+            if s not in seen:
+                primary.append(s)
+                seen.add(s)
+
+        # 3) Secondary = everything else not in primary
+        secondary = [s for s in sorted_setups if s not in seen]
+
+        # No "avoid" by default for Hybrid – that’s decided intraday
 
     return {
         "cycle": cycle,
