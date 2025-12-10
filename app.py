@@ -252,8 +252,7 @@ def build_daily_plan_md(lookback_days, recent_dates, result):
 def main():
     st.title("Futures Market Cycles – Web Interface")
     st.write("ES best-trades → cycle prediction → daily plan")
-
-        st.caption(
+    st.caption(
         "Time reference: US RTH 09:30–16:00 ET (15:30–22:00 CET). "
         "First 2h ≈ 09:30–11:30 ET (15:30–17:30 CET). "
         "Until noon ≈ 09:30–13:30 ET (15:30–19:30 CET)."
