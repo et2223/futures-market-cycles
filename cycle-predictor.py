@@ -1,11 +1,13 @@
 import os
 import re
+import sys
 from collections import defaultdict, Counter
 
 # CONFIG
 BEST_TRADES_DIR = "group-best-trades"
 OUTPUT_FILE = os.path.join("market-cycle", "today-prediction.md")
-LOOKBACK_DAYS = 3  # how many most recent days to use for the prediction
+LOOKBACK_DAYS_DEFAULT = 3  # default lookback
+
 
 # Mapping raw setup names to normalized categories
 def normalize_setup(name: str) -> str:
@@ -149,12 +151,10 @@ def infer_cycle_and_setups(last_days_counts):
             avoid.append("Continuation")
 
     else:  # Hybrid
-        # HYBRID UPDATE:
         # Hybrid: trend + traps. REM should be treated as primary if present.
-        # 1) Start from top 3 most frequent setups as before
         base_primary = sorted_setups[:3]
 
-        # 2) Ensure REM is included in primary if it exists at all
+        # Ensure REM is included in primary if present
         if "REM" in sorted_setups and "REM" not in base_primary:
             base_primary.append("REM")
 
@@ -166,10 +166,9 @@ def infer_cycle_and_setups(last_days_counts):
                 primary.append(s)
                 seen.add(s)
 
-        # 3) Secondary = everything else not in primary
+        # Secondary = everything else not in primary
         secondary = [s for s in sorted_setups if s not in seen]
-
-        # No "avoid" by default for Hybrid – that’s decided intraday
+        # No "avoid" by default for Hybrid – intraday discretion
 
     return {
         "cycle": cycle,
@@ -181,6 +180,16 @@ def infer_cycle_and_setups(last_days_counts):
 
 
 def main():
+    # Decide lookback days (from CLI if provided)
+    lookback_days = LOOKBACK_DAYS_DEFAULT
+    if len(sys.argv) >= 2:
+        try:
+            arg_val = int(sys.argv[1])
+            if arg_val > 0:
+                lookback_days = arg_val
+        except ValueError:
+            pass  # ignore bad input, fall back to default
+
     all_days = load_all_days()
     if not all_days:
         print("No best-trades files found. Exiting.")
@@ -188,7 +197,7 @@ def main():
 
     # Sort days ascending, then take the last N for prediction
     sorted_dates = sorted(all_days.keys())
-    recent_dates = sorted_dates[-LOOKBACK_DAYS:]
+    recent_dates = sorted_dates[-lookback_days:]
     recent_counts = [all_days[d] for d in recent_dates]
 
     result = infer_cycle_and_setups(recent_counts)
@@ -197,7 +206,7 @@ def main():
     lines = []
     lines.append(f"# Today’s Market Cycle Prediction")
     lines.append("")
-    lines.append(f"**Lookback days used:** {LOOKBACK_DAYS}")
+    lines.append(f"**Lookback days used:** {lookback_days}")
     lines.append("")
     lines.append("**Days considered:**")
     for d in recent_dates:
@@ -243,3 +252,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
