@@ -100,7 +100,6 @@ def infer_cycle_and_setups(last_days_counts):
     primary = []
     secondary = []
     avoid = []
-
     sorted_setups = [s for s, _ in agg.most_common()]
 
     if cycle.startswith("Trend"):
@@ -138,7 +137,7 @@ def infer_cycle_and_setups(last_days_counts):
                 seen.add(s)
 
         secondary = [s for s in sorted_setups if s not in seen]
-        # avoid stays empty for Hybrid
+        # avoid stays empty for Hybrid – decided intraday
 
     return {
         "cycle": cycle,
@@ -147,6 +146,52 @@ def infer_cycle_and_setups(last_days_counts):
         "avoid": avoid,
         "raw_counts": agg,
     }
+
+
+def build_time_commentary(cycle: str):
+    """
+    Return two text blocks:
+    - first_2h_comment
+    - until_noon_comment
+    based on inferred cycle.
+    """
+    cycle = cycle.lower()
+
+    if "trend / hybrid" in cycle or cycle.startswith("trend"):
+        first_2h = (
+            "- Expect cleaner trend behavior in the first 2 hours if the first breakout holds.\n"
+            "- EMT and Continuation can both be valid from the open if price and midband accept above/below key levels.\n"
+            "- Watch for one early REM-style failed counter-move, but do not over-focus on reversals.\n"
+        )
+        until_noon = (
+            "- Trend can continue, but the probability of traps increases as the morning progresses.\n"
+            "- Look for REM after extended pushes or failed attempts to reverse the trend.\n"
+            "- Trendline + Continuation remain valid if structure (HH/HL or LL/LH) is intact.\n"
+        )
+    elif "rotational" in cycle or "trap" in cycle:
+        first_2h = (
+            "- Expect fake breaks of the 15m range and key levels (PDH/PDL, ONH/ONL) in the first 2 hours.\n"
+            "- 15m Re-Entry, REM, and Reversal around clear extremes have higher probability.\n"
+            "- Avoid chasing the first breakout; wait for confirmation that it fails or truly holds.\n"
+        )
+        until_noon = (
+            "- Range boundaries become more defined as the morning develops.\n"
+            "- Continuation trades are lower probability unless the market clearly transitions into trend.\n"
+            "- REM remains important whenever the market fakes a new direction and snaps back.\n"
+        )
+    else:  # Hybrid
+        first_2h = (
+            "- Expect a mix of trend and trap behavior in the first 2 hours.\n"
+            "- Continuation and Trendline setups can work, but REM is equally important when early reversals fail.\n"
+            "- Be flexible: if the first breakout holds cleanly, lean trend; if it fails, lean trap (REM / Re-Entry).\n"
+        )
+        until_noon = (
+            "- As structure develops, Trendline + Continuation can offer cleaner entries.\n"
+            "- REM remains a primary tool around failed attempts to reverse the main move.\n"
+            "- Avoid over-trading: wait for confluence with midband, 80 SMA, and key levels.\n"
+        )
+
+    return first_2h, until_noon
 
 
 def main():
@@ -170,6 +215,7 @@ def main():
     recent_counts = [all_days[d] for d in recent_dates]
 
     result = infer_cycle_and_setups(recent_counts)
+    first_2h_comment, until_noon_comment = build_time_commentary(result["cycle"])
 
     # Use today's date for plan filename
     today_str = datetime.today().strftime("%Y-%m-%d")
@@ -213,13 +259,15 @@ def main():
     else:
         lines.append("- **Setups to avoid:** (none)")
     lines.append("")
-    lines.append("## 4. Open Playbook (First 2 Hours)")
+    lines.append("## 4. Open Playbook – First 2 Hours (RTH)")
     lines.append("")
-    lines.append("- What to look for around 15m range (acceptance vs rejection).")
-    lines.append("- Expected behavior at PDH / PDL / ONH / ONL.")
-    lines.append("- Conditions to allow EMT vs 15m Re-Entry vs REM.")
+    lines.append(first_2h_comment.strip())
     lines.append("")
-    lines.append("## 5. Key Levels")
+    lines.append("## 5. Extended Morning – Until Noon (RTH)")
+    lines.append("")
+    lines.append(until_noon_comment.strip())
+    lines.append("")
+    lines.append("## 6. Key Levels")
     lines.append("")
     lines.append("- PDH:")
     lines.append("- PDL:")
@@ -227,18 +275,18 @@ def main():
     lines.append("- ONL:")
     lines.append("- HTF levels (daily/weekly):")
     lines.append("")
-    lines.append("## 6. Risk and Rules")
+    lines.append("## 7. Risk and Rules")
     lines.append("")
     lines.append("- Max trades:")
     lines.append("- Max daily loss:")
     lines.append("- Stop trading conditions (tilt, 2R loss, plan violation, etc.):")
     lines.append("")
-    lines.append("## 7. Behavioral Focus")
+    lines.append("## 8. Behavioral Focus")
     lines.append("")
     lines.append("- What to do more of today (wait, size discipline, A+ only, etc.).")
     lines.append("- What to avoid (revenge, chasing, countertrend fighting, etc.).")
     lines.append("")
-    lines.append("## 8. After 10:00 AM – Cycle Recheck")
+    lines.append("## 9. After 10:00 AM – Cycle Recheck")
     lines.append("")
     lines.append("- Does live action confirm the expected cycle?")
     lines.append("- If not, which cycle is actually playing out?")
@@ -257,3 +305,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
