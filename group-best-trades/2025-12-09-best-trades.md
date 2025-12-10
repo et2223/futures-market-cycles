@@ -21,5 +21,5 @@
 
 - No EMT and no 15m Re-Entry trades made the “best of day” list.  
 - Continuation, REM, Reversal, and Trend Line all appeared, with REM showing up twice.  
-- This points to a **hybrid / trap-tilted trend day**: the market allowed continuation, but traps and failed moves (REM, Reversal) were a big part of the structure, especially around midday.  
-- Trend Line showing once adds to the idea of a controlled, structured environment rather than pure chop.
+- This suggests a **Hybrid Trend with trap elements**: the market allowed trend continuation, but traps and failed moves (REM, Reversal) were key parts of the structure, especially around midday.  
+- Trend Line showing once confirms that structure was still respected rather than pure chop.
